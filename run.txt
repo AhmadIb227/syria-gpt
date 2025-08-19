@@ -7,3 +7,5 @@ docker run -p 8000:8000 syria-gpt
 pgAdmin: http://localhost:5050
 docker-compose up --build
 oosjfosjfsjfpsjf
+
+huzifa test 
