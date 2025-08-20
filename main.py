@@ -1,14 +1,20 @@
 from fastapi import FastAPI
-from fastapi_sqlalchemy import DBSessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
+<<<<<<< HEAD
+from fastapi.staticfiles import StaticFiles
+from fastapi_sqlalchemy import DBSessionMiddleware
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from contextlib import asynccontextmanager
 import logging
 
+=======
+>>>>>>> 6026ab5 (ahmed alzain m1)
 from config.database import Base, engine
 from config.settings import settings
-from routes.auth import router as auth_router
+from app.routers.auth import router as auth_router
+from app.routers.twofa import router as twofa_router
+from app.routers.oauth_google import router as google_router
 
 # Setup logging
 logger = setup_logging()
@@ -43,6 +49,7 @@ app = FastAPI(
 engine = create_engine(settings.DATABASE_URL, echo=True)
 app.add_middleware(DBSessionMiddleware, custom_engine=engine)
 
+# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -50,8 +57,6 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
-
-app.include_router(auth_router)
 
 @app.on_event("startup")
 async def startup_event():
@@ -73,6 +78,4 @@ def say_hello(name: str):
 # Routers
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(twofa_router, prefix="/auth/2fa", tags=["2fa"])
-
-# Static files for simple test UI
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.include_router(google_router, prefix="/auth/oauth", tags=["oauth"]) 

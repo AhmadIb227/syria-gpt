@@ -1,7 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from config.database import get_db
-from app.schemas.auth import LoginRequest, TokenResponse, TwoFactorChallenge, RegisterRequest
+from app.schemas.auth import (
+    LoginRequest,
+    TokenResponse,
+    TwoFactorChallenge,
+    RegisterRequest,
+    EmailRequest,
+    VerifyEmailRequest,
+    PasswordResetRequest,
+    PasswordResetConfirm,
+    MessageResponse,
+)
 from app.services.auth_service import AuthService
 from app.core.deps import get_current_user
 from app.schemas.user import UserRead
@@ -68,6 +78,48 @@ def register(payload: RegisterRequest, db: Session = Depends(get_db)):
             password=payload.password,
             phone_number=payload.phone_number,
         )
+        return user
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/request-verification", response_model=MessageResponse)
+def request_verification(payload: EmailRequest, db: Session = Depends(get_db)):
+    service = UserService(db)
+    try:
+        token = service.issue_email_verification(email=payload.email)
+        link = f"/auth/verify-email?token={token}"
+        return MessageResponse(message="Verification issued", link=link)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/verify-email", response_model=UserRead)
+def verify_email(payload: VerifyEmailRequest, db: Session = Depends(get_db)):
+    service = UserService(db)
+    try:
+        user = service.verify_email(token=payload.token)
+        return user
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/request-password-reset", response_model=MessageResponse)
+def request_password_reset(payload: PasswordResetRequest, db: Session = Depends(get_db)):
+    service = UserService(db)
+    try:
+        token = service.issue_password_reset(email=payload.email)
+        link = f"/auth/reset-password?token={token}"
+        return MessageResponse(message="Reset issued", link=link)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.post("/reset-password", response_model=UserRead)
+def reset_password(payload: PasswordResetConfirm, db: Session = Depends(get_db)):
+    service = UserService(db)
+    try:
+        user = service.reset_password(token=payload.token, new_password=payload.new_password)
         return user
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

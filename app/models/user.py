@@ -16,6 +16,8 @@ class User(Base):
     is_phone_verified = Column(Boolean, default=False)
     two_factor_enabled = Column(Boolean, default=False)
     two_factor_secret = Column(String(64), nullable=True)
+    token = Column(String, nullable=True)
+    reset_token = Column(String, nullable=True)
     status = Column(String(50), default="pending_verification")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
