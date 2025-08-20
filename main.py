@@ -1,23 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi_sqlalchemy import DBSessionMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.exceptions import RequestValidationError
 from sqlalchemy import create_engine
 from sqlalchemy.exc import SQLAlchemyError
 from contextlib import asynccontextmanager
 import logging
 
-from config.model import Base
+from config.database import Base, engine
 from config.settings import settings
-from config.logging_config import setup_logging
-from config.exceptions import (
-    SyriaGPTException,
-    syria_gpt_exception_handler,
-    http_exception_handler,
-    validation_exception_handler,
-    database_exception_handler,
-    general_exception_handler,
-)
 from routes.auth import router as auth_router
 
 # Setup logging
@@ -49,11 +39,10 @@ app = FastAPI(
     redoc_url="/redoc" if settings.DEBUG else None,
 )
 
+# Database setup
 engine = create_engine(settings.DATABASE_URL, echo=True)
-
 app.add_middleware(DBSessionMiddleware, custom_engine=engine)
 
-# Configure CORS with environment-based origins
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -62,16 +51,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add exception handlers
-app.add_exception_handler(SyriaGPTException, syria_gpt_exception_handler)
-app.add_exception_handler(HTTPException, http_exception_handler)
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(SQLAlchemyError, database_exception_handler)
-app.add_exception_handler(Exception, general_exception_handler)
+app.include_router(auth_router)
 
-# Include routers
-app.include_router(auth_router, prefix="/auth", tags=["authentication"])
-
+@app.on_event("startup")
+async def startup_event():
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables created successfully")
 
 @app.get("/")
 def read_root():
@@ -84,3 +69,10 @@ def health_check():
 @app.get("/hello/{name}")
 def say_hello(name: str):
     return {"message": f"Hello, {name}! Welcome to Syria GPT."}
+
+# Routers
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(twofa_router, prefix="/auth/2fa", tags=["2fa"])
+
+# Static files for simple test UI
+app.mount("/static", StaticFiles(directory="static"), name="static")

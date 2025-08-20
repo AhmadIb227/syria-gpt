@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>اختبار تسجيل الدخول</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 32px; background:#f7f7f8; }
+    .card { max-width: 420px; margin:auto; background:#fff; padding:24px; border-radius:12px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+    label { display:block; margin:12px 0 6px; color:#333 }
+    input { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; }
+    .row { display:flex; align-items:center; gap:8px; margin:10px 0; }
+    button { background:#2563eb; color:#fff; border:none; border-radius:8px; padding:10px 14px; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:not-allowed }
+    pre { background:#0b1021; color:#d1e7ff; padding:12px; border-radius:8px; overflow:auto; max-height:280px }
+    .muted { color:#666 }
+  </style>
+  <script>
+    async function login(ev){
+      ev.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const remember = document.getElementById('remember').checked;
+      const code = document.getElementById('code').value || null;
+      const redirect_to = '/chat';
+      setLoading(true);
+      try {
+        const res = await fetch('/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ email, password, remember_me: remember, two_factor_code: code, redirect_to })
+        });
+        const data = await res.json();
+        document.getElementById('loginRes').textContent = JSON.stringify(data, null, 2);
+        if(res.status === 200 && data.access_token){
+          localStorage.setItem('token', data.access_token);
+          await me();
+        }
+      } catch(err){
+        document.getElementById('loginRes').textContent = String(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function me(){
+      const token = localStorage.getItem('token');
+      if(!token){
+        document.getElementById('meRes').textContent = 'لا يوجد توكن';
+        return;
+      }
+      try{
+        const res = await fetch('/auth/me', { headers:{ 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        document.getElementById('meRes').textContent = JSON.stringify(data, null, 2);
+      }catch(err){
+        document.getElementById('meRes').textContent = String(err);
+      }
+    }
+
+    function setLoading(is){
+      document.getElementById('submit').disabled = is;
+    }
+    async function enable2fa(){
+      const token = localStorage.getItem('token');
+      if(!token){ alert('سجّل الدخول أولاً'); return; }
+      const res = await fetch('/auth/2fa/enable', { method:'POST', headers:{ 'Authorization': `Bearer ${token}` }});
+      const data = await res.json();
+      document.getElementById('twofaRes').textContent = JSON.stringify(data, null, 2);
+      if(data.qr_svg){ document.getElementById('qr').innerHTML = data.qr_svg; }
+    }
+    async function disable2fa(){
+      const token = localStorage.getItem('token');
+      if(!token){ alert('سجّل الدخول أولاً'); return; }
+      const res = await fetch('/auth/2fa/disable', { method:'POST', headers:{ 'Authorization': `Bearer ${token}` }});
+      document.getElementById('twofaRes').textContent = res.status === 204 ? 'تم التعطيل' : await res.text();
+      document.getElementById('qr').innerHTML = '';
+    }
+    async function registerUser(ev){
+      ev.preventDefault();
+      const email = document.getElementById('r_email').value;
+      const password = document.getElementById('r_password').value;
+      const phone = document.getElementById('r_phone').value || null;
+      try{
+        const res = await fetch('/auth/register', {
+          method: 'POST',
+          headers: { 'Content-Type':'application/json' },
+          body: JSON.stringify({ email, password, phone_number: phone })
+        });
+        const data = await res.json();
+        document.getElementById('regRes').textContent = JSON.stringify({ status: res.status, data }, null, 2);
+      }catch(err){
+        document.getElementById('regRes').textContent = String(err);
+      }
+    }
+  </script>
+  </head>
+<body>
+  <div class="card">
+    <h2>واجهة اختبار تسجيل الدخول</h2>
+    <p class="muted">استخدم البريد <b>user@example.com</b> وكلمة المرور <b>secret</b></p>
+    <form onsubmit="login(event)">
+      <label>البريد الإلكتروني</label>
+      <input id="email" type="email" value="user@example.com" required />
+      <label>كلمة المرور</label>
+      <input id="password" type="password" value="secret" required />
+      <div class="row">
+        <input id="remember" type="checkbox" />
+        <label for="remember">تذكرني 30 يومًا</label>
+      </div>
+      <label>رمز 2FA (اختياري)</label>
+      <input id="code" placeholder="123456" />
+      <div style="margin-top:14px">
+        <button id="submit" type="submit">تسجيل الدخول</button>
+        <button type="button" onclick="me()">جلب /auth/me</button>
+      </div>
+    </form>
+
+    <h3>نتيجة /auth/login</h3>
+    <pre id="loginRes"></pre>
+
+    <h3>نتيجة /auth/me</h3>
+    <pre id="meRes"></pre>
+  </div>
+
+  <div class="card" style="margin-top:24px">
+    <h2>إدارة 2FA (TOTP)</h2>
+    <div class="row">
+      <button type="button" onclick="enable2fa()">تفعيل 2FA</button>
+      <button type="button" onclick="disable2fa()">تعطيل 2FA</button>
+    </div>
+    <div id="qr" style="margin:12px 0"></div>
+    <h3>نتيجة</h3>
+    <pre id="twofaRes"></pre>
+  </div>
+
+  <div class="card" style="margin-top:24px">
+    <h2>تسجيل مستخدم جديد</h2>
+    <form onsubmit="registerUser(event)">
+      <label>البريد الإلكتروني</label>
+      <input id="r_email" type="email" placeholder="new@example.com" required />
+      <label>كلمة المرور</label>
+      <input id="r_password" type="password" placeholder="StrongP@ss123" required />
+      <label>رقم الهاتف (اختياري)</label>
+      <input id="r_phone" type="tel" placeholder="+9639xxxxxxx" />
+      <div style="margin-top:14px">
+        <button type="submit">تسجيل</button>
+      </div>
+    </form>
+    <h3>نتيجة /auth/register</h3>
+    <pre id="regRes"></pre>
+  </div>
+</body>
+</html>
+
+
