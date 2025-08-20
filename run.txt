@@ -1,8 +1,0 @@
-uvicorn main:app --reload
-#for-build-in-doc
-docker build -t syria-gpt .
-#for-run-serv
-docker run -p 9000:9000 syria-gpt
-# http://localhost:9000 or http://127.0.0.1:9000
-pgAdmin: http://localhost:5050
-docker-compose up --build

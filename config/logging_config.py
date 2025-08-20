@@ -8,9 +8,9 @@ from config.settings import settings
 
 def get_logging_config() -> Dict[str, Any]:
     """Get logging configuration based on environment."""
-    
+
     log_level = "DEBUG" if settings.DEBUG else "INFO"
-    
+
     config = {
         "version": 1,
         "disable_existing_loggers": False,
@@ -55,7 +55,7 @@ def get_logging_config() -> Dict[str, Any]:
             },
         },
     }
-    
+
     return config
 
 
@@ -63,8 +63,8 @@ def setup_logging() -> logging.Logger:
     """Setup application logging."""
     logging_config = get_logging_config()
     logging.config.dictConfig(logging_config)
-    
+
     logger = logging.getLogger("syria_gpt")
     logger.info(f"Logging configured for {settings.ENVIRONMENT} environment")
-    
+
     return logger

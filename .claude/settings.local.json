@@ -8,7 +8,11 @@
       "Bash(docker-compose up:*)",
       "Bash(docker-compose:*)",
       "Bash(docker exec:*)",
-      "Bash(alembic upgrade:*)"
+      "Bash(alembic upgrade:*)",
+      "Bash(uvicorn:*)",
+      "Bash(timeout:*)",
+      "Bash(del test_auth.py test_oauth_url.py nul run.txt)",
+      "Bash(rm:*)"
     ],
     "deny": [],
     "ask": []
