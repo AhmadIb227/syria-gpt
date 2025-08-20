@@ -1,24 +1,77 @@
+import os
+import sys
+from typing import List
 from decouple import config
 
+
 class Settings:
-    DATABASE_URL = config("DATABASE_URL", default="postgresql+psycopg2://admin:admin123@db:5432/syriagpt")
-    SECRET_KEY = config("SECRET_KEY", default="your-secret-key-here-change-in-production")
-    ALGORITHM = config("ALGORITHM", default="HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES = config("ACCESS_TOKEN_EXPIRE_MINUTES", default=30, cast=int)
-    REFRESH_TOKEN_EXPIRE_DAYS = config("REFRESH_TOKEN_EXPIRE_DAYS", default=7, cast=int)
-    EMAIL_VERIFICATION_EXPIRE_HOURS = config("EMAIL_VERIFICATION_EXPIRE_HOURS", default=24, cast=int)
-    PASSWORD_RESET_EXPIRE_HOURS = config("PASSWORD_RESET_EXPIRE_HOURS", default=1, cast=int)
+    """Application settings with environment variable support and validation."""
     
-    SMTP_SERVER = config("SMTP_SERVER", default="smtp.gmail.com")
-    SMTP_PORT = config("SMTP_PORT", default=587, cast=int)
-    SMTP_USERNAME = config("SMTP_USERNAME", default="")
-    SMTP_PASSWORD = config("SMTP_PASSWORD", default="")
-    EMAIL_FROM = config("EMAIL_FROM", default="noreply@syriagpt.com")
+    # Environment
+    ENVIRONMENT: str = config("ENVIRONMENT", default="development")
+    DEBUG: bool = ENVIRONMENT == "development"
     
-    GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID", default="")
-    GOOGLE_CLIENT_SECRET = config("GOOGLE_CLIENT_SECRET", default="")
-    GOOGLE_REDIRECT_URI = config("GOOGLE_REDIRECT_URI", default="http://localhost:9000/auth/google/callback")
+    # Database Configuration
+    DATABASE_URL: str = config("DATABASE_URL", default="postgresql+psycopg2://admin:admin123@db:5432/syriagpt")
     
-    FRONTEND_URL = config("FRONTEND_URL", default="http://localhost:3000")
+    # Security Configuration
+    SECRET_KEY: str = config("SECRET_KEY", default="3e8c7f51e5bd5dac5ba401b1125d43fb")
+    ALGORITHM: str = config("ALGORITHM", default="HS256")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = config("ACCESS_TOKEN_EXPIRE_MINUTES", default=30, cast=int)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = config("REFRESH_TOKEN_EXPIRE_DAYS", default=7, cast=int)
+    EMAIL_VERIFICATION_EXPIRE_HOURS: int = config("EMAIL_VERIFICATION_EXPIRE_HOURS", default=24, cast=int)
+    PASSWORD_RESET_EXPIRE_HOURS: int = config("PASSWORD_RESET_EXPIRE_HOURS", default=1, cast=int)
+    
+    # Email Configuration
+    SMTP_SERVER: str = config("SMTP_SERVER", default="smtp.gmail.com")
+    SMTP_PORT: int = config("SMTP_PORT", default=587, cast=int)
+    SMTP_USERNAME: str = config("SMTP_USERNAME", default="")
+    SMTP_PASSWORD: str = config("SMTP_PASSWORD", default="")
+    EMAIL_FROM: str = config("EMAIL_FROM", default="noreply@syriagpt.com")
+    
+    # OAuth Configuration
+    GOOGLE_CLIENT_ID: str = config("GOOGLE_CLIENT_ID", default="134729060788-b5v8fhl32jdsf0db30g4vvoasle7t84o.apps.googleusercontent.com")
+    GOOGLE_CLIENT_SECRET: str = config("GOOGLE_CLIENT_SECRET", default="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")
+    GOOGLE_REDIRECT_URI: str = config("GOOGLE_REDIRECT_URI", default="http://localhost:9000/auth/google/callback")
+    
+    # Frontend Configuration
+    FRONTEND_URL: str = config("FRONTEND_URL", default="http://localhost:3000")
+    
+    # CORS Origins
+    @property
+    def ALLOWED_ORIGINS(self) -> List[str]:
+        """Get allowed CORS origins based on environment."""
+        if self.ENVIRONMENT == "production":
+            return [self.FRONTEND_URL]
+        return [
+            self.FRONTEND_URL,
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:8000",
+            "http://127.0.0.1:8000",
+        ]
+    
+    def validate(self) -> None:
+        """Validate critical settings."""
+        errors = []
+        
+        if not self.SECRET_KEY or len(self.SECRET_KEY) < 32:
+            errors.append("SECRET_KEY must be at least 32 characters long")
+        
+        if self.ENVIRONMENT == "production":
+            if not self.GOOGLE_CLIENT_ID:
+                errors.append("GOOGLE_CLIENT_ID is required in production")
+            if not self.GOOGLE_CLIENT_SECRET:
+                errors.append("GOOGLE_CLIENT_SECRET is required in production")
+            if not self.SMTP_USERNAME or not self.SMTP_PASSWORD:
+                errors.append("SMTP credentials are required in production")
+        
+        if errors:
+            error_msg = "Configuration validation failed:\n" + "\n".join(f"- {error}" for error in errors)
+            print(error_msg, file=sys.stderr)
+            if self.ENVIRONMENT == "production":
+                sys.exit(1)
+
 
 settings = Settings()
+settings.validate()
