@@ -3,11 +3,18 @@
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from jose import JWTError, jwt
+<<<<<<< HEAD
 from uuid import UUID
 
 from config.settings import settings
 from infrastructure.database.password_reset_repository import PasswordResetRepository
 
+=======
+import logging
+from config.settings import settings
+
+logger = logging.getLogger(__name__)
+>>>>>>> 04ea66d602a42ba841f5cddd792b83ba536e69a1
 class TokenService:
     """Service for JWT token operations."""
 
@@ -16,7 +23,12 @@ class TokenService:
         self.algorithm = settings.ALGORITHM
         self.access_token_expire_minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES
         self.refresh_token_expire_days = settings.REFRESH_TOKEN_EXPIRE_DAYS
+<<<<<<< HEAD
         self.password_reset_expire_minutes = 60  # مدة صلاحية رابط إعادة التعيين
+=======
+        
+        self.email_verification_expire_hours = settings.EMAIL_VERIFICATION_EXPIRE_HOURS
+>>>>>>> 04ea66d602a42ba841f5cddd792b83ba536e69a1
     
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create JWT access token."""
@@ -36,6 +48,7 @@ class TokenService:
         
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
     
+<<<<<<< HEAD
     def create_password_reset_token(self, user_id: UUID, expire_minutes: int = 60) -> str:
         """Create JWT password reset token."""
         expires_at = datetime.utcnow() + timedelta(minutes=expire_minutes)
@@ -53,19 +66,31 @@ class TokenService:
         })
         return token
     
+=======
+    def create_2fa_token(self, user_id: str) -> str:
+        """Create a short-lived token for 2FA verification."""
+        to_encode = {
+            "sub": user_id,
+            "exp": datetime.utcnow() + timedelta(minutes=10),  # 2FA token valid for 10 minutes
+            "type": "2fa",
+        }
+        return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+
+>>>>>>> 04ea66d602a42ba841f5cddd792b83ba536e69a1
     def verify_token(self, token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
         """Verify and decode JWT token with type check."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
-            
-            # Verify token type
+
             if payload.get("type") != token_type:
                 return None
-            
+
             return payload
-        except JWTError:
+        except JWTError as e: # <-- عدّل هذا السطر
+            logger.error(f"Token verification failed: {e}") # <-- أضف هذا السطر
             return None
     
+<<<<<<< HEAD
     def verify_password_reset_token(self, token: str) -> Optional[str]:
         """Verify password reset token and return user_id if valid."""
         try:
@@ -84,6 +109,23 @@ class TokenService:
             return None
         except jwt.InvalidTokenError:
             return None
+=======
+    def generate_verification_token(self, user_id: str) -> str:
+        """Generate a secure JWT for email verification."""
+        to_encode = {
+            "sub": user_id,
+            "exp": datetime.utcnow() + timedelta(hours=self.email_verification_expire_hours),
+            "type": "email_verification"
+        }
+        return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+    
+    def verify_verification_token(self, token: str) -> Optional[str]:
+        """Verify the email verification token and return the user ID."""
+        payload = self.verify_token(token, token_type="email_verification")
+        if not payload:
+            return None
+        return payload.get("sub")
+>>>>>>> 04ea66d602a42ba841f5cddd792b83ba536e69a1
     
     def get_access_token_expiry(self) -> int:
         """Get access token expiry in seconds."""

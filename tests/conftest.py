@@ -2,15 +2,15 @@
 
 import pytest
 import asyncio
-from typing import Generator, AsyncGenerator
+from typing import Generator
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 from unittest.mock import Mock
 
-from main import app
-from config.model import Base, get_db
-from config.settings import settings
+from main import create_app
+from config.model import Base
+from config.database import get_db
 from domain.entities import User, UserStatus
 from infrastructure.services import PasswordService, TokenService, EmailService
 from infrastructure.external_services import GoogleOAuthProvider, FacebookOAuthProvider
@@ -18,7 +18,7 @@ from infrastructure.database import UserRepositoryImpl
 
 
 # Test database URL
-TEST_DATABASE_URL = "sqlite:///./test.db"
+TEST_DATABASE_URL = "postgresql+psycopg2://admin:admin123@db:5432/syriagpt_test"
 
 
 @pytest.fixture(scope="session")
@@ -32,7 +32,9 @@ def event_loop():
 @pytest.fixture(scope="session")
 def test_engine():
     """Create test database engine."""
-    engine = create_engine(TEST_DATABASE_URL, echo=False)
+    engine = create_engine(
+        TEST_DATABASE_URL
+    )
     Base.metadata.create_all(bind=engine)
     yield engine
     Base.metadata.drop_all(bind=engine)
@@ -53,12 +55,13 @@ def test_db(test_engine) -> Generator[Session, None, None]:
 @pytest.fixture
 def client(test_db: Session) -> Generator[TestClient, None, None]:
     """Create test client with test database."""
+    app = create_app()
     def override_get_db():
         try:
             yield test_db
         finally:
             pass
-    
+
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as test_client:
         yield test_client
@@ -131,7 +134,8 @@ async def created_user(user_repository: UserRepositoryImpl, password_service: Pa
         "status": UserStatus.ACTIVE.value,
         "is_active": True
     }
-    return await user_repository.create(user_data)
+    user = await user_repository.create(user_data)
+    return user
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ from pathlib import Path
 
 def run_command(command: list, description: str) -> bool:
     """Run a command and return success status."""
-    print(f"\n🧪 {description}")
+    print(f"\n {description}")
     print("=" * 50)
     
     try:

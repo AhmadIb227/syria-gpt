@@ -1,10 +1,13 @@
 """Authentication use cases - business logic implementation."""
 
+import random
+import string
 from typing import Dict, Any, Optional
 from uuid import UUID
+from datetime import datetime, timedelta
 
 from domain.entities import User, UserStatus
-from domain.interfaces import IUserRepository, IOAuthProvider
+from domain.interfaces import IUserRepository, IOAuthProvider, ITwoFactorAuthRepository
 from infrastructure.services.password_service import PasswordService
 from infrastructure.services.token_service import TokenService
 from infrastructure.services.email_service import EmailService
@@ -18,12 +21,14 @@ class AuthUseCases:
         user_repository: IUserRepository,
         password_service: PasswordService,
         token_service: TokenService,
-        email_service: EmailService
+        email_service: EmailService,
+        two_factor_auth_repository: ITwoFactorAuthRepository
     ):
         self.user_repository = user_repository
         self.password_service = password_service
         self.token_service = token_service
         self.email_service = email_service
+        self.two_factor_auth_repository = two_factor_auth_repository
     
     async def register_user(self, user_data: Dict[str, Any]) -> Dict[str, str]:
         """Register a new user."""
@@ -49,7 +54,7 @@ class AuthUseCases:
         
         # Send verification email if email provided
         if user.email and not user.is_email_verified:
-            verification_token = self.token_service.generate_verification_token()
+            verification_token = self.token_service.generate_verification_token(str(user.id))
             await self.email_service.send_verification_email(user.email, verification_token)
         
         return {
@@ -63,24 +68,79 @@ class AuthUseCases:
         user = await self.user_repository.get_by_email(email)
         if not user:
             raise ValueError("Invalid email or password")
-        
+
         # Verify password
-        if not user.password_hash or not self.password_service.verify_password(password, user.password_hash):
+        if not user.password_hash or not self.password_service.verify_password(
+            password, user.password_hash
+        ):
             raise ValueError("Invalid email or password")
-        
+
         # Check if user can login
         if not user.can_login:
             raise ValueError("Account is not active or verified")
-        
-        # Generate tokens
+
+        # Handle 2FA if enabled
+        if user.two_factor_enabled:
+            # 1. Generate 6-digit code
+            tfa_code = "".join(random.choices(string.digits, k=6))
+            code_hash = self.password_service.hash_password(tfa_code)
+            expires_at = datetime.utcnow() + timedelta(minutes=10)
+
+            # 2. Save hashed code and expiry to the database
+            await self.two_factor_auth_repository.create_2fa_code(user.id, code_hash, expires_at)
+            
+            # 3. Send code to user's email
+            await self.email_service.send_2fa_code(user.email, tfa_code)
+            
+            # 4. Generate a temporary 2FA token
+            tfa_token = self.token_service.create_2fa_token(str(user.id))
+            
+            return {
+                "message": "2FA required. A code has been sent to your email.",
+                "tfa_token": tfa_token,
+            }
+
+        # Generate final tokens if 2FA is not enabled
         access_token = self.token_service.create_access_token({"sub": str(user.id)})
         refresh_token = self.token_service.create_refresh_token(str(user.id))
-        
+
         return {
             "access_token": access_token,
             "refresh_token": refresh_token,
             "token_type": "bearer",
-            "expires_in": self.token_service.get_access_token_expiry()
+            "expires_in": self.token_service.get_access_token_expiry(),
+        }
+
+    async def verify_2fa_code(self, tfa_token: str, code: str) -> Dict[str, Any]:
+        """Verify the 2FA code and return final tokens."""
+        # 1. Verify the 2FA token
+        payload = self.token_service.verify_token(tfa_token, token_type="2fa")
+        if not payload:
+            raise ValueError("Invalid or expired 2FA token")
+
+        user_id = UUID(payload.get("sub"))
+
+        # 2. Get the 2FA code from the database
+        tfa_code_obj = await self.two_factor_auth_repository.get_2fa_code_by_user_id(user_id)
+        if not tfa_code_obj:
+            raise ValueError("Invalid or expired 2FA code")
+
+        # 3. Verify the code
+        if not self.password_service.verify_password(code, tfa_code_obj.code_hash):
+            raise ValueError("Invalid 2FA code")
+
+        # 4. Mark the code as used
+        await self.two_factor_auth_repository.mark_code_as_used(tfa_code_obj.id)
+
+        # 5. Generate final tokens
+        access_token = self.token_service.create_access_token({"sub": str(user_id)})
+        refresh_token = self.token_service.create_refresh_token(str(user_id))
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": self.token_service.get_access_token_expiry(),
         }
     
     async def authenticate_with_oauth(

@@ -74,6 +74,7 @@ class AuthApplicationService:
             current_password, 
             new_password
         )
+<<<<<<< HEAD
         
     async def request_password_reset(self, email: str) -> Dict[str, str]:
         """Request password reset link via email."""
@@ -90,3 +91,11 @@ class AuthApplicationService:
     async def sign_out_all_devices(self, user_id: UUID) -> Dict[str, str]:
         """Sign out user from all devices by incrementing token_version."""
         return await self.auth_use_cases.sign_out_all_devices(user_id)
+=======
+    
+    
+# أضف هذه الدالة داخل الكلاس AuthApplicationService
+    async def verify_2fa_code(self, tfa_token: str, code: str) -> Dict[str, Any]:
+        """Verify the 2FA code and return final tokens."""
+        return await self.auth_use_cases.verify_2fa_code(tfa_token, code)
+>>>>>>> 04ea66d602a42ba841f5cddd792b83ba536e69a1
