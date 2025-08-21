@@ -17,7 +17,7 @@ class Settings:
     SECRET_KEY: str = config("SECRET_KEY", default="3e8c7f51e5bd5dac5ba401b1125d43fb")
     ALGORITHM: str = config("ALGORITHM", default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = config("ACCESS_TOKEN_EXPIRE_MINUTES", default=30, cast=int)
-    REFRESH_TOKEN_EXPIRE_DAYS: int = config("REFRESH_TOKEN_EXPIRE_DAYS", default=7, cast=int)
+    REFRESH_TOKEN_EXPIRE_DAYS: int = config("REFRESH_TOKEN_EXPIRE_DAYS", default=30, cast=int)
     EMAIL_VERIFICATION_EXPIRE_HOURS: int = config(
         "EMAIL_VERIFICATION_EXPIRE_HOURS", default=24, cast=int
     )

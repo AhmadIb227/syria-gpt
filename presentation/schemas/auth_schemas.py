@@ -1,6 +1,6 @@
 """Request/Response schemas for authentication."""
 
-from pydantic import BaseModel, EmailStr, field_validator
+from pydantic import BaseModel, EmailStr, Field, validator, field_validator
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
@@ -83,3 +83,10 @@ class ChangePasswordRequest(BaseModel):
 class MessageResponse(BaseModel):
     """Generic message response schema."""
     message: str
+
+
+
+# أضف هذا الكلاس في نهاية الملف
+class TwoFactorVerificationRequest(BaseModel):
+    tfa_token: str = Field(..., description="The temporary token received during sign-in")
+    code: str = Field(..., min_length=6, max_length=6, description="The 6-digit code sent to the user's email")

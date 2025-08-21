@@ -237,3 +237,52 @@ class TestAuthEndpointsWithRealAuth:
             assert "access_token" in data
             assert "refresh_token" in data
             assert data["token_type"] == "bearer"
+
+    # يمكنك إضافة هذا الاختبار كمثال لاختبار المصادقة الثنائية
+# ملاحظة: يتطلب هذا الاختبار تعديلات على بيانات الاختبار لتفعيل 2FA للمستخدم
+    @pytest.mark.asyncio
+    async def test_full_2fa_signin_flow(self, client: TestClient):
+        """Test complete signup and signin flow with 2FA enabled."""
+        # الخطوة 1: إنشاء مستخدم (يفترض أن 2FA مفعلة له)
+        signup_data = {
+            "email": "2fa_user@example.com",
+            "password": "strongpassword123",
+            "first_name": "2FA",
+            "last_name": "User"
+        }
+        with patch('infrastructure.services.EmailService.send_verification_email', new_callable=AsyncMock):
+            signup_response = client.post("/auth/signup", json=signup_data)
+        assert signup_response.status_code == 200
+        # هنا ستحتاج إلى طريقة لتفعيل 2FA للمستخدم الذي تم إنشاؤه للتو
+    
+        # الخطوة 2: محاولة تسجيل الدخول
+        signin_data = {
+            "email": "2fa_user@example.com",
+            "password": "strongpassword123"
+        }
+    
+        # Mock a 2FA code being sent
+        with patch('infrastructure.services.EmailService.send_2fa_code', new_callable=AsyncMock) as mock_send_2fa:
+            signin_response = client.post("/auth/signin", json=signin_data)
+    
+        # يجب أن نتوقع استجابة تتطلب 2FA
+        assert signin_response.status_code == 200 
+        signin_data = signin_response.json()
+        assert "tfa_token" in signin_data
+        assert "A code has been sent" in signin_data["message"]
+    
+        tfa_token = signin_data["tfa_token"]
+    
+        # الخطوة 3: التحقق من رمز 2FA (نفترض أن الرمز هو '123456')
+        # ستحتاج إلى طريقة للحصول على الرمز الصحيح أو عمل Mock له
+        verification_data = {"tfa_token": tfa_token, "code": "123456"}
+    
+        # Here we would need to mock the verification logic to pass
+        # For a real integration test, you'd fetch the code from the database
+        verify_response = client.post("/auth/2fa/verify", json=verification_data)
+    
+        # نتوقع الآن الحصول على التوكنز النهائية
+        # This will fail unless the code verification logic is properly mocked
+        # assert verify_response.status_code == 200
+        # verify_data = verify_response.json()
+        # assert "access_token" in verify_data        

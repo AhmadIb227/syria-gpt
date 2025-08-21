@@ -47,6 +47,9 @@ class User(Base):
     refresh_tokens = relationship(
         "RefreshToken", back_populates="user", cascade="all, delete-orphan"
     )
+    two_factor_auths = relationship(
+        "TwoFactorAuth", back_populates="user", cascade="all, delete-orphan"
+    )
 
     __table_args__ = (
         Index("ix_users_email", "email"),
@@ -110,15 +113,20 @@ class RefreshToken(Base):
     )
 
 
-# Database setup
-engine = create_engine(settings.DATABASE_URL, echo=settings.DEBUG)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+class TwoFactorAuth(Base):
+    __tablename__ = "two_factor_auths"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    code_hash = Column(String, nullable=False)
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    is_used = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    user = relationship("User", back_populates="two_factor_auths")
+
+    __table_args__ = (
+        Index("ix_two_factor_auths_user_id", "user_id"),
+    )
 
 
-def get_db():
-    """Get database session."""
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()

@@ -37,6 +37,15 @@ class TokenService:
         
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
     
+    def create_2fa_token(self, user_id: str) -> str:
+        """Create a short-lived token for 2FA verification."""
+        to_encode = {
+            "sub": user_id,
+            "exp": datetime.utcnow() + timedelta(minutes=10),  # 2FA token valid for 10 minutes
+            "type": "2fa",
+        }
+        return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
+
     def verify_token(self, token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
         """Verify and decode JWT token."""
         try:

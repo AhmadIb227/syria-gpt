@@ -41,3 +41,12 @@ class EmailService:
         await asyncio.sleep(0.1)
         
         logger.info(f"Welcome email sent to {email}")
+
+    async def send_2fa_code(self, email: str, code: str) -> None:
+        """Send 2FA code email."""
+        logger.info(f"Sending 2FA code to {email}: {code}")
+        
+        # Simulate async email sending
+        await asyncio.sleep(0.1)
+        
+        logger.info(f"2FA code sent to {email}")

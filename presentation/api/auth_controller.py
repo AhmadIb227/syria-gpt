@@ -3,12 +3,13 @@
 from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, status, Depends
 from uuid import UUID
+from presentation.schemas import TwoFactorVerificationRequest
 
 from application import AuthApplicationService
 from presentation.schemas import (
     UserSignUpRequest, UserSignInRequest, UserResponse, TokenResponse,
     GoogleAuthRequest, FacebookAuthRequest, MessageResponse,
-    ChangePasswordRequest, EmailVerificationRequest
+    ChangePasswordRequest, EmailVerificationRequest, TwoFactorVerificationRequest # تمت الإضافة هنا
 )
 from presentation.dependencies import get_auth_service, get_current_user
 
@@ -42,6 +43,26 @@ async def sign_in(
         tokens = await auth_service.authenticate_user(
             credentials.email,
             credentials.password
+        )
+        return TokenResponse(**tokens)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e)
+        )
+    
+
+# أضف هذه الدالة بعد دالة sign_in
+@router.post("/2fa/verify", response_model=TokenResponse)
+async def verify_2fa(
+    verification_data: TwoFactorVerificationRequest,
+    auth_service: AuthApplicationService = Depends(get_auth_service)
+):
+    """Verify 2FA code and return final access/refresh tokens."""
+    try:
+        tokens = await auth_service.verify_2fa_code(
+            verification_data.tfa_token,
+            verification_data.code
         )
         return TokenResponse(**tokens)
     except ValueError as e:

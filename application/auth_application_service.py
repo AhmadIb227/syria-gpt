@@ -74,3 +74,9 @@ class AuthApplicationService:
             current_password, 
             new_password
         )
+    
+    
+# أضف هذه الدالة داخل الكلاس AuthApplicationService
+    async def verify_2fa_code(self, tfa_token: str, code: str) -> Dict[str, Any]:
+        """Verify the 2FA code and return final tokens."""
+        return await self.auth_use_cases.verify_2fa_code(tfa_token, code)

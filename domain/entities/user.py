@@ -54,11 +54,10 @@ class User:
     @property
     def can_login(self) -> bool:
         """Check if user can log in."""
-        return (
-            self.is_active and 
-            self.status in [UserStatus.ACTIVE, UserStatus.PENDING_VERIFICATION] and
-            (self.password_hash or self.google_id or self.facebook_id)
-        )
+        # يجب أن يكون المستخدم نشطًا، وحالته 'active'، ولديه كلمة مرور أو حساب social
+        is_verified_and_active = self.is_active and self.status == UserStatus.ACTIVE
+        has_credentials = bool(self.password_hash or self.google_id or self.facebook_id)
+        return is_verified_and_active and has_credentials
     
     def activate(self) -> None:
         """Activate user account."""

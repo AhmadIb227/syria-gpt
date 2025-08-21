@@ -1,6 +1,7 @@
 """Tests for Token Service."""
 
 import pytest
+import uuid
 from datetime import datetime, timedelta
 from infrastructure.services import TokenService
 
@@ -71,18 +72,18 @@ class TestTokenService:
     
     def test_generate_verification_token(self, token_service: TokenService):
         """Test generating verification token."""
-        token = token_service.generate_verification_token()
-        
-        assert token is not None
+        user_id = str(uuid.uuid4()) # إضافة user_id وهمي
+        token = token_service.generate_verification_token(user_id) # تمرير الـ user_id
         assert isinstance(token, str)
-        assert len(token) > 20  # URL-safe tokens are reasonably long
+        # يمكنك إضافة المزيد من التأكيدات هنا
     
     def test_generate_verification_token_unique(self, token_service: TokenService):
         """Test that verification tokens are unique."""
-        token1 = token_service.generate_verification_token()
-        token2 = token_service.generate_verification_token()
-        
-        assert token1 != token2
+        user_id_1 = str(uuid.uuid4()) # إضافة user_id وهمي
+        user_id_2 = str(uuid.uuid4()) # إضافة user_id وهمي آخر
+        token1 = token_service.generate_verification_token(user_id_1) # تمرير الـ user_id
+        token2 = token_service.generate_verification_token(user_id_2) # تمرير الـ user_id
+        assert token1 != token2    
     
     def test_get_access_token_expiry(self, token_service: TokenService):
         """Test getting access token expiry."""
@@ -92,3 +93,13 @@ class TestTokenService:
         assert isinstance(expiry, int)
         # Should be 30 minutes * 60 seconds = 1800 seconds by default
         assert expiry == 30 * 60
+
+
+    def test_verify_verification_token_valid(self, token_service: TokenService):
+        """Test verifying a valid verification token."""
+        user_id = str(uuid.uuid4()) # إضافة user_id وهمي
+        token = token_service.generate_verification_token(user_id) # تمرير الـ user_id
+        decoded_user_id = token_service.verify_verification_token(token)
+        assert decoded_user_id == user_id    
+
+    

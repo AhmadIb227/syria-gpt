@@ -10,7 +10,7 @@ from domain.use_cases import AuthUseCases
 from infrastructure.database import UserRepositoryImpl
 from infrastructure.services import PasswordService, TokenService, EmailService
 from infrastructure.external_services import GoogleOAuthProvider, FacebookOAuthProvider
-from config.model import get_db
+from config.database import get_db
 
 # Security
 security = HTTPBearer()
