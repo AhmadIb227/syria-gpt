@@ -204,3 +204,37 @@ class AuthUseCases:
         await self.user_repository.update(user_id, {"password_hash": new_password_hash})
         
         return {"message": "Password changed successfully"}
+    
+    async def request_password_reset(self, email: str) -> Dict[str, str]:
+        user = await self.user_repository.get_by_email(email)
+        if not user:
+            raise ValueError("No account found with this email")
+
+        reset_token = self.token_service.create_password_reset_token(user.id)
+        await self.email_service.send_password_reset_email(user.email, reset_token)
+        return {"message": "Password reset instructions sent to your email"}
+    
+    async def confirm_password_reset(self, token: str, new_password: str) -> Dict[str, str]:
+        user_id = self.token_service.verify_password_reset_token(token)
+        if not user_id:
+            raise ValueError("Invalid or expired password reset token")
+
+        user = await self.user_repository.get_by_id(UUID(user_id))
+        if not user:
+            raise ValueError("User not found")
+
+        new_password_hash = self.password_service.hash_password(new_password)
+        await self.user_repository.update(user.id, {"password_hash": new_password_hash, "token_version": user.token_version + 1})
+        return {"message": "Password has been reset successfully"}
+    
+    async def sign_out_user(self, user_id: UUID, refresh_token: str) -> Dict[str, str]:
+        await self.user_repository.remove_refresh_token(user_id, refresh_token)
+        return {"message": "Signed out from this device"}
+    
+    async def sign_out_all_devices(self, user_id: UUID) -> Dict[str, str]:
+        user = await self.user_repository.get_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        await self.user_repository.update(user_id, {"token_version": user.token_version + 1})
+        return {"message": "Signed out from all devices"}

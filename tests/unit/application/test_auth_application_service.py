@@ -22,6 +22,8 @@ class TestAuthApplicationService:
         mock.authenticate_with_oauth = AsyncMock()
         mock.verify_email = AsyncMock()
         mock.change_password = AsyncMock()
+        mock.request_password_reset = AsyncMock()
+        mock.confirm_password_reset = AsyncMock()
         return mock
     
     @pytest.fixture
@@ -159,4 +161,27 @@ class TestAuthApplicationService:
             current_password,
             new_password
         )
+        assert result == expected_result
+        
+    async def test_request_password_reset(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
+        """Test requesting password reset."""
+        email = "test@example.com"
+        expected_result = {"message": "Password reset instructions sent to your email"}
+        mock_auth_use_cases.request_password_reset.return_value = expected_result
+
+        result = await auth_app_service.request_password_reset(email)
+
+        mock_auth_use_cases.request_password_reset.assert_called_once_with(email)
+        assert result == expected_result
+
+    async def test_confirm_password_reset(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
+        """Test confirming password reset."""
+        token = "reset_token_123"
+        new_password = "newpassword123"
+        expected_result = {"message": "Password has been reset successfully"}
+        mock_auth_use_cases.confirm_password_reset.return_value = expected_result
+
+        result = await auth_app_service.confirm_password_reset(token, new_password)
+
+        mock_auth_use_cases.confirm_password_reset.assert_called_once_with(token, new_password)
         assert result == expected_result

@@ -5,11 +5,13 @@ from fastapi import APIRouter, HTTPException, status, Depends
 from uuid import UUID
 
 from application import AuthApplicationService
-from presentation.schemas import (
+from presentation.schemas.auth_schemas import (
     UserSignUpRequest, UserSignInRequest, UserResponse, TokenResponse,
     GoogleAuthRequest, FacebookAuthRequest, MessageResponse,
-    ChangePasswordRequest, EmailVerificationRequest
+    ChangePasswordRequest, EmailVerificationRequest,
+    PasswordResetRequest, PasswordResetConfirmRequest
 )
+
 from presentation.dependencies import get_auth_service, get_current_user
 
 
@@ -180,4 +182,38 @@ async def get_current_user_info(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve user information"
+        )
+        
+@router.post("/request-password-reset", response_model=MessageResponse)
+async def request_password_reset(
+    reset_request: PasswordResetRequest,
+    auth_service: AuthApplicationService = Depends(get_auth_service)
+):
+    """Request password reset link via email."""
+    try:
+        result = await auth_service.request_password_reset(reset_request.email)
+        return MessageResponse(**result)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+
+
+@router.post("/confirm-password-reset", response_model=MessageResponse)
+async def confirm_password_reset(
+    confirm_request: PasswordResetConfirmRequest,
+    auth_service: AuthApplicationService = Depends(get_auth_service)
+):
+    """Confirm password reset using token and new password."""
+    try:
+        result = await auth_service.confirm_password_reset(
+            confirm_request.token,
+            confirm_request.new_password
+        )
+        return MessageResponse(**result)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
         )

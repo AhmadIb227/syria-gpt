@@ -200,6 +200,38 @@ class TestAuthEndpoints:
         assert "id" in data
         assert "email" in data
         assert "status" in data
+    
+    @pytest.mark.asyncio
+    async def test_request_password_reset_valid_email(self, client: TestClient, sample_user_data: dict):
+        """Test requesting password reset for valid email."""
+        # تأكد من تسجيل المستخدم أولاً
+        with patch('infrastructure.services.EmailService.send_verification_email', new_callable=AsyncMock):
+            client.post("/auth/signup", json=sample_user_data)
+    
+        with patch('infrastructure.services.EmailService.send_password_reset_email', new_callable=AsyncMock):
+            response = client.post("/auth/request-password-reset", json={"email": sample_user_data["email"]})
+    
+        assert response.status_code == 200
+        data = response.json()
+        assert "instructions" in data["message"].lower()
+
+    def test_request_password_reset_invalid_email(self, client: TestClient):
+        """Test requesting password reset for invalid email."""
+        with patch('infrastructure.services.EmailService.send_password_reset_email', new_callable=AsyncMock):
+            response = client.post("/auth/request-password-reset", json={"email": "notfound@example.com"})
+    
+        assert response.status_code == 400
+        data = response.json()
+        assert "no account" in data["detail"].lower()
+
+    @pytest.mark.asyncio
+    async def test_confirm_password_reset_invalid_token(self, client: TestClient):
+        """Test confirming password reset with invalid token."""
+        payload = {"token": "invalidtoken", "new_password": "newpassword123"}
+        response = client.post("/auth/confirm-password-reset", json=payload)
+        assert response.status_code == 400
+        data = response.json()
+        assert "invalid" in data["detail"].lower() or "expired" in data["detail"].lower()
 
 
 class TestAuthEndpointsWithRealAuth:

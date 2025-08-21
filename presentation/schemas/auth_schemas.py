@@ -79,6 +79,22 @@ class ChangePasswordRequest(BaseModel):
             raise ValueError('Password must be at least 8 characters long')
         return v
 
+class PasswordResetRequest(BaseModel):
+    """Password reset request schema."""
+    email: EmailStr
+
+class PasswordResetConfirmRequest(BaseModel):
+    """Password reset confirm request schema."""
+    token: str
+    new_password: str
+
+    @field_validator('new_password')
+    @classmethod
+    def validate_new_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
 
 class MessageResponse(BaseModel):
     """Generic message response schema."""

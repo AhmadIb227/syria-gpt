@@ -74,3 +74,19 @@ class AuthApplicationService:
             current_password, 
             new_password
         )
+        
+    async def request_password_reset(self, email: str) -> Dict[str, str]:
+        """Request password reset link via email."""
+        return await self.auth_use_cases.request_password_reset(email)
+
+    async def confirm_password_reset(self, token: str, new_password: str) -> Dict[str, str]:
+        """Confirm password reset using token and new password."""
+        return await self.auth_use_cases.confirm_password_reset(token, new_password)
+
+    async def sign_out_user(self, user_id: UUID, refresh_token: str) -> Dict[str, str]:
+        """Sign out user from a single device/session."""
+        return await self.auth_use_cases.sign_out_user(user_id, refresh_token)
+
+    async def sign_out_all_devices(self, user_id: UUID) -> Dict[str, str]:
+        """Sign out user from all devices by incrementing token_version."""
+        return await self.auth_use_cases.sign_out_all_devices(user_id)

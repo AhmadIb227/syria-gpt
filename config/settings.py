@@ -26,8 +26,8 @@ class Settings:
     # Email Configuration
     SMTP_SERVER: str = config("SMTP_SERVER", default="smtp.gmail.com")
     SMTP_PORT: int = config("SMTP_PORT", default=587, cast=int)
-    SMTP_USERNAME: str = config("SMTP_USERNAME", default="")
-    SMTP_PASSWORD: str = config("SMTP_PASSWORD", default="")
+    SMTP_USERNAME: str = config("SMTP_USERNAME", default="looka1584@gmail.com")
+    SMTP_PASSWORD: str = config("SMTP_PASSWORD", default="jymhzkthkmsgltdz")
     EMAIL_FROM: str = config("EMAIL_FROM", default="noreply@syriagpt.com")
 
     # OAuth Configuration
