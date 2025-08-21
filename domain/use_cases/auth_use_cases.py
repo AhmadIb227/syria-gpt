@@ -49,7 +49,7 @@ class AuthUseCases:
         
         # Send verification email if email provided
         if user.email and not user.is_email_verified:
-            verification_token = self.token_service.generate_verification_token()
+            verification_token = self.token_service.generate_verification_token(str(user.id))
             await self.email_service.send_verification_email(user.email, verification_token)
         
         return {

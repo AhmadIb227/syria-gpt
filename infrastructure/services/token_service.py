@@ -4,10 +4,10 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 from jose import JWTError, jwt
-
+import logging
 from config.settings import settings
 
-
+logger = logging.getLogger(__name__)
 class TokenService:
     """Service for JWT token operations."""
     
@@ -16,6 +16,8 @@ class TokenService:
         self.algorithm = settings.ALGORITHM
         self.access_token_expire_minutes = settings.ACCESS_TOKEN_EXPIRE_MINUTES
         self.refresh_token_expire_days = settings.REFRESH_TOKEN_EXPIRE_DAYS
+        
+        self.email_verification_expire_hours = settings.EMAIL_VERIFICATION_EXPIRE_HOURS
     
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create JWT access token."""
@@ -39,25 +41,30 @@ class TokenService:
         """Verify and decode JWT token."""
         try:
             payload = jwt.decode(token, self.secret_key, algorithms=[self.algorithm])
-            
-            # Verify token type
+
             if payload.get("type") != token_type:
                 return None
-            
+
             return payload
-        except JWTError:
+        except JWTError as e: # <-- عدّل هذا السطر
+            logger.error(f"Token verification failed: {e}") # <-- أضف هذا السطر
             return None
     
-    def generate_verification_token(self) -> str:
-        """Generate secure verification token."""
-        return secrets.token_urlsafe(32)
+    def generate_verification_token(self, user_id: str) -> str:
+        """Generate a secure JWT for email verification."""
+        to_encode = {
+            "sub": user_id,
+            "exp": datetime.utcnow() + timedelta(hours=self.email_verification_expire_hours),
+            "type": "email_verification"
+        }
+        return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
     
     def verify_verification_token(self, token: str) -> Optional[str]:
-        """Verify verification token (simplified - in real app would be stored in DB)."""
-        # This is a simplified implementation
-        # In a real application, you would store verification tokens in the database
-        # with expiration times and mark them as used when verified
-        return None  # Placeholder
+        """Verify the email verification token and return the user ID."""
+        payload = self.verify_token(token, token_type="email_verification")
+        if not payload:
+            return None
+        return payload.get("sub")
     
     def get_access_token_expiry(self) -> int:
         """Get access token expiry in seconds."""
