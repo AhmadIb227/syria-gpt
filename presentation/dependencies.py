@@ -8,6 +8,8 @@ from sqlalchemy.orm import Session
 from application import AuthApplicationService
 from domain.use_cases import AuthUseCases
 from infrastructure.database import UserRepositoryImpl
+from infrastructure.database.password_reset_repository import PasswordResetRepository
+from infrastructure.database.two_factor_auth_repository_impl import TwoFactorAuthRepositoryImpl
 from infrastructure.services import PasswordService, TokenService, EmailService
 from infrastructure.external_services import GoogleOAuthProvider, FacebookOAuthProvider
 from config.database import get_db
@@ -31,11 +33,12 @@ def get_password_service() -> PasswordService:
     return _password_service
 
 
-def get_token_service() -> TokenService:
+def get_token_service(db: Session = Depends(get_db)) -> TokenService:
     """Get singleton token service."""
     global _token_service
     if _token_service is None:
-        _token_service = TokenService()
+        password_reset_repo = PasswordResetRepository(db)
+        _token_service = TokenService(password_reset_repo)
     return _token_service
 
 
@@ -66,26 +69,29 @@ def get_facebook_provider() -> FacebookOAuthProvider:
 def get_auth_service(db: Session = Depends(get_db)) -> AuthApplicationService:
     """Get authentication application service."""
     user_repository = UserRepositoryImpl(db)
+    two_factor_auth_repository = TwoFactorAuthRepositoryImpl(db)
+    token_service = get_token_service(db)
     auth_use_cases = AuthUseCases(
         user_repository=user_repository,
         password_service=get_password_service(),
-        token_service=get_token_service(),
-        email_service=get_email_service()
+        token_service=token_service,
+        email_service=get_email_service(),
+        two_factor_auth_repository=two_factor_auth_repository,
     )
     return AuthApplicationService(
         auth_use_cases=auth_use_cases,
         google_provider=get_google_provider(),
-        facebook_provider=get_facebook_provider()
+        facebook_provider=get_facebook_provider(),
     )
 
 
 def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
 ) -> Dict[str, Any]:
     """Get current user from JWT token."""
     token = credentials.credentials
-    token_service = get_token_service()
-    
+    token_service = get_token_service(db)
+
     payload = token_service.verify_token(token, "access")
     if not payload:
         raise HTTPException(
@@ -93,5 +99,5 @@ def get_current_user(
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     return payload

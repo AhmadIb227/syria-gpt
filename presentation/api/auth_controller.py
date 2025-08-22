@@ -7,14 +7,17 @@ from presentation.schemas import TwoFactorVerificationRequest
 
 from application import AuthApplicationService
 from presentation.schemas.auth_schemas import (
-    UserSignUpRequest, UserSignInRequest, UserResponse, TokenResponse,
-    GoogleAuthRequest, FacebookAuthRequest, MessageResponse,
-<<<<<<< HEAD
-    ChangePasswordRequest, EmailVerificationRequest,
-    PasswordResetRequest, PasswordResetConfirmRequest
-=======
-    ChangePasswordRequest, EmailVerificationRequest, TwoFactorVerificationRequest # تمت الإضافة هنا
->>>>>>> 04ea66d602a42ba841f5cddd792b83ba536e69a1
+    UserSignUpRequest,
+    UserSignInRequest,
+    UserResponse,
+    TokenResponse,
+    GoogleAuthRequest,
+    FacebookAuthRequest,
+    MessageResponse,
+    ChangePasswordRequest,
+    EmailVerificationRequest,
+    PasswordResetRequest,
+    PasswordResetConfirmRequest,
 )
 
 from presentation.dependencies import get_auth_service, get_current_user
@@ -25,220 +28,162 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 @router.post("/signup", response_model=MessageResponse)
 async def sign_up(
-    user_data: UserSignUpRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    user_data: UserSignUpRequest, auth_service: AuthApplicationService = Depends(get_auth_service)
 ):
     """Register a new user."""
     try:
         result = await auth_service.register_user(user_data.model_dump())
         return MessageResponse(**result)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/signin", response_model=TokenResponse)
 async def sign_in(
-    credentials: UserSignInRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    credentials: UserSignInRequest, auth_service: AuthApplicationService = Depends(get_auth_service)
 ):
     """Authenticate user and return tokens."""
     try:
-        tokens = await auth_service.authenticate_user(
-            credentials.email,
-            credentials.password
-        )
+        tokens = await auth_service.authenticate_user(credentials.email, credentials.password)
         return TokenResponse(**tokens)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
-    
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
+
 
 # أضف هذه الدالة بعد دالة sign_in
 @router.post("/2fa/verify", response_model=TokenResponse)
 async def verify_2fa(
     verification_data: TwoFactorVerificationRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    auth_service: AuthApplicationService = Depends(get_auth_service),
 ):
     """Verify 2FA code and return final access/refresh tokens."""
     try:
         tokens = await auth_service.verify_2fa_code(
-            verification_data.tfa_token,
-            verification_data.code
+            verification_data.tfa_token, verification_data.code
         )
         return TokenResponse(**tokens)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(e))
 
 
 @router.get("/google")
-async def google_auth(
-    auth_service: AuthApplicationService = Depends(get_auth_service)
-):
+async def google_auth(auth_service: AuthApplicationService = Depends(get_auth_service)):
     """Get Google OAuth URL."""
     try:
         return auth_service.get_google_auth_url()
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(e))
 
 
 @router.post("/google/callback", response_model=TokenResponse)
 async def google_callback(
     auth_request: GoogleAuthRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    auth_service: AuthApplicationService = Depends(get_auth_service),
 ):
     """Handle Google OAuth callback."""
     try:
         tokens = await auth_service.authenticate_with_google(auth_request.code)
         return TokenResponse(**tokens)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/facebook")
-async def facebook_auth(
-    auth_service: AuthApplicationService = Depends(get_auth_service)
-):
+async def facebook_auth(auth_service: AuthApplicationService = Depends(get_auth_service)):
     """Get Facebook OAuth URL."""
     try:
         return auth_service.get_facebook_auth_url()
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_501_NOT_IMPLEMENTED,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail=str(e))
 
 
 @router.post("/facebook/callback", response_model=TokenResponse)
 async def facebook_callback(
     auth_request: FacebookAuthRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    auth_service: AuthApplicationService = Depends(get_auth_service),
 ):
     """Handle Facebook OAuth callback."""
     try:
         tokens = await auth_service.authenticate_with_facebook(auth_request.code)
         return TokenResponse(**tokens)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/verify-email", response_model=MessageResponse)
 async def verify_email(
     verification_request: EmailVerificationRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    auth_service: AuthApplicationService = Depends(get_auth_service),
 ):
     """Verify user email with token."""
     try:
         result = await auth_service.verify_email(verification_request.token)
         return MessageResponse(**result)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/change-password", response_model=MessageResponse)
 async def change_password(
     password_data: ChangePasswordRequest,
     auth_service: AuthApplicationService = Depends(get_auth_service),
-    current_user: Dict[str, Any] = Depends(get_current_user)
+    current_user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Change user password."""
     try:
         result = await auth_service.change_password(
-            UUID(current_user["sub"]),
-            password_data.current_password,
-            password_data.new_password
+            UUID(current_user["sub"]), password_data.current_password, password_data.new_password
         )
         return MessageResponse(**result)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: Dict[str, Any] = Depends(get_current_user),
-    auth_service: AuthApplicationService = Depends(get_auth_service)
-):
+async def get_current_user_info(current_user: Dict[str, Any] = Depends(get_current_user)):
     """Get current user information."""
-    try:
-        # In a real implementation, you would fetch user data from the service
-        user_id = current_user.get("sub")
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token payload"
-            )
-        
-        # For now, return basic info from the token
-        # In production, this would call auth_service.get_user_by_id(user_id)
-        return UserResponse(
-            id=user_id,
-            email="user@example.com",  # Would be fetched from service
-            first_name="User",
-            last_name="Name",
-            is_email_verified=True,
-            is_phone_verified=False,
-            two_factor_enabled=False,
-            status="active",
-            is_active=True
-        )
-    except Exception as e:
+    user_id = current_user.get("sub")
+    if not user_id:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve user information"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload"
         )
-        
+
+    return UserResponse(
+        id=user_id,
+        email=current_user.get("email", ""),
+        first_name=current_user.get("first_name", ""),
+        last_name=current_user.get("last_name", ""),
+        is_email_verified=current_user.get("is_email_verified", False),
+        is_phone_verified=current_user.get("is_phone_verified", False),
+        two_factor_enabled=current_user.get("two_factor_enabled", False),
+        status=current_user.get("status", "active"),
+        is_active=current_user.get("is_active", True),
+    )
+
+
 @router.post("/request-password-reset", response_model=MessageResponse)
 async def request_password_reset(
     reset_request: PasswordResetRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    auth_service: AuthApplicationService = Depends(get_auth_service),
 ):
     """Request password reset link via email."""
     try:
         result = await auth_service.request_password_reset(reset_request.email)
         return MessageResponse(**result)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/confirm-password-reset", response_model=MessageResponse)
 async def confirm_password_reset(
     confirm_request: PasswordResetConfirmRequest,
-    auth_service: AuthApplicationService = Depends(get_auth_service)
+    auth_service: AuthApplicationService = Depends(get_auth_service),
 ):
     """Confirm password reset using token and new password."""
     try:
         result = await auth_service.confirm_password_reset(
-            confirm_request.token,
-            confirm_request.new_password
+            confirm_request.token, confirm_request.new_password
         )
         return MessageResponse(**result)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

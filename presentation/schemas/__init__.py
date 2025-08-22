@@ -10,5 +10,5 @@ from .auth_schemas import (
 __all__ = [
     "UserSignUpRequest", "UserSignInRequest", "UserResponse", "TokenResponse",
     "GoogleAuthRequest", "FacebookAuthRequest", "EmailVerificationRequest",
-    "ChangePasswordRequest", "MessageResponse"
+    "ChangePasswordRequest", "MessageResponse", "TwoFactorVerificationRequest"
 ]

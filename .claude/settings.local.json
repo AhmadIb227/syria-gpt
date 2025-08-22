@@ -12,7 +12,8 @@
       "Bash(uvicorn:*)",
       "Bash(timeout:*)",
       "Bash(del test_auth.py test_oauth_url.py nul run.txt)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []

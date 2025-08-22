@@ -9,17 +9,10 @@ from uuid import UUID
 class UserSignUpRequest(BaseModel):
     """User signup request schema."""
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8, description="Password must be at least 8 characters")
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     phone_number: Optional[str] = None
-    
-    @field_validator('password')
-    @classmethod
-    def validate_password(cls, v):
-        if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters long')
-        return v
 
 
 class UserSignInRequest(BaseModel):

@@ -1,0 +1,168 @@
+{
+  "success": true,
+  "total_tests": 25,
+  "passed_tests": 25,
+  "failed_tests": 0,
+  "pass_rate": 1.0,
+  "duration": 2.8462953567504883,
+  "categories": {
+    "API Endpoints": true,
+    "Authentication Flow": true,
+    "Database Operations": true,
+    "Error Handling": true,
+    "Performance": true,
+    "Container Health": true
+  },
+  "test_details": [
+    {
+      "test": "API GET /",
+      "status": "PASS",
+      "details": "HTTP 200",
+      "timestamp": 1755850328.0818295
+    },
+    {
+      "test": "API GET /health",
+      "status": "PASS",
+      "details": "HTTP 200 - Status: healthy",
+      "timestamp": 1755850328.1108062
+    },
+    {
+      "test": "API GET /docs",
+      "status": "PASS",
+      "details": "HTTP 200",
+      "timestamp": 1755850328.1155593
+    },
+    {
+      "test": "API GET /auth/google",
+      "status": "PASS",
+      "details": "HTTP 200 - Has auth_url: True",
+      "timestamp": 1755850328.1424294
+    },
+    {
+      "test": "API GET /auth/facebook",
+      "status": "PASS",
+      "details": "HTTP 200",
+      "timestamp": 1755850328.1565597
+    },
+    {
+      "test": "API GET /auth/me",
+      "status": "PASS",
+      "details": "HTTP 403 (expected auth error)",
+      "timestamp": 1755850328.1708143
+    },
+    {
+      "test": "User Registration",
+      "status": "PASS",
+      "details": "HTTP 200 - User registered successfully. Please check your email for verification.",
+      "timestamp": 1755850328.4715793
+    },
+    {
+      "test": "Duplicate Registration",
+      "status": "PASS",
+      "details": "HTTP 400 (expected duplicate error)",
+      "timestamp": 1755850328.4866583
+    },
+    {
+      "test": "Invalid Registration - Invalid email format",
+      "status": "PASS",
+      "details": "HTTP 422 (expected validation error)",
+      "timestamp": 1755850328.5154066
+    },
+    {
+      "test": "Invalid Registration - Weak password",
+      "status": "PASS",
+      "details": "HTTP 422 (expected validation error)",
+      "timestamp": 1755850328.5190973
+    },
+    {
+      "test": "Invalid Registration - Missing required fields",
+      "status": "PASS",
+      "details": "HTTP 422 (expected validation error)",
+      "timestamp": 1755850328.5467298
+    },
+    {
+      "test": "Sign In Unverified User",
+      "status": "PASS",
+      "details": "HTTP 401 (expected unverified user error)",
+      "timestamp": 1755850328.7514699
+    },
+    {
+      "test": "Invalid Password Sign In",
+      "status": "PASS",
+      "details": "HTTP 401 (expected auth error)",
+      "timestamp": 1755850328.9579968
+    },
+    {
+      "test": "Migration Status Check",
+      "status": "PASS",
+      "details": "Exit code: 0 - Database up to date",
+      "timestamp": 1755850329.4757583
+    },
+    {
+      "test": "Database Schema Validation",
+      "status": "PASS",
+      "details": "Exit code: 0 - Schema validation passed",
+      "timestamp": 1755850329.9805202
+    },
+    {
+      "test": "Migration History",
+      "status": "PASS",
+      "details": "Exit code: 0 - Found 2 migrations",
+      "timestamp": 1755850330.499286
+    },
+    {
+      "test": "PostgreSQL Connection",
+      "status": "PASS",
+      "details": "Exit code: 0 - /var/run/postgresql:5432 - accepting connections",
+      "timestamp": 1755850330.6649547
+    },
+    {
+      "test": "Non-existent Endpoint",
+      "status": "PASS",
+      "details": "HTTP 404 (expected 404)",
+      "timestamp": 1755850330.6802728
+    },
+    {
+      "test": "Invalid JSON",
+      "status": "PASS",
+      "details": "HTTP 422 (expected JSON error)",
+      "timestamp": 1755850330.6845388
+    },
+    {
+      "test": "Missing Content-Type",
+      "status": "PASS",
+      "details": "HTTP 422 (expected content-type error)",
+      "timestamp": 1755850330.7115762
+    },
+    {
+      "test": "Large Request Body",
+      "status": "PASS",
+      "details": "HTTP 422 (expected size/validation error)",
+      "timestamp": 1755850330.7174108
+    },
+    {
+      "test": "Health Endpoint Response Time",
+      "status": "PASS",
+      "details": "Response time: 0.006s (threshold: 2.0s)",
+      "timestamp": 1755850330.7231739
+    },
+    {
+      "test": "Concurrent Requests",
+      "status": "PASS",
+      "details": "Success rate: 100.0% (threshold: 80%)",
+      "timestamp": 1755850330.7433188
+    },
+    {
+      "test": "Container Status",
+      "status": "PASS",
+      "details": "3/3 containers running",
+      "timestamp": 1755850330.8311353
+    },
+    {
+      "test": "Container Logs Check",
+      "status": "PASS",
+      "details": "0 serious issues, 0 critical errors, 0 exceptions",
+      "timestamp": 1755850330.918015
+    }
+  ]
+}
