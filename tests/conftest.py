@@ -9,7 +9,7 @@ from sqlalchemy.orm import sessionmaker, Session
 from unittest.mock import Mock
 
 from main import create_app
-from config.model import Base
+from database.models import Base
 from config.database import get_db
 from domain.entities import User, UserStatus
 from infrastructure.services import PasswordService, TokenService, EmailService
@@ -17,16 +17,13 @@ from infrastructure.external_services import GoogleOAuthProvider, FacebookOAuthP
 from infrastructure.database import UserRepositoryImpl
 
 
-# Test database URL
-TEST_DATABASE_URL = "postgresql+psycopg2://admin:admin123@db:5432/syriagpt_test"
+# Test database URL - using PostgreSQL for testing
+# Use Docker service name when running inside Docker, localhost when running outside
+import os
+DB_HOST = os.getenv("DB_HOST", "db" if os.path.exists("/.dockerenv") else "localhost")
+TEST_DATABASE_URL = f"postgresql://admin:admin123@{DB_HOST}:5432/syriagpt_test"
 
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """Create an instance of the default event loop for the test session."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest.fixture(scope="session")
@@ -75,9 +72,11 @@ def password_service() -> PasswordService:
 
 
 @pytest.fixture
-def token_service() -> TokenService:
+def token_service(test_db: Session) -> TokenService:
     """Create token service instance."""
-    return TokenService()
+    from infrastructure.database.repositories.password_reset_repository import PasswordResetRepository
+    password_reset_repo = PasswordResetRepository(test_db)
+    return TokenService(password_reset_repo)
 
 
 @pytest.fixture
@@ -139,15 +138,17 @@ async def created_user(user_repository: UserRepositoryImpl, password_service: Pa
 
 
 @pytest.fixture
-def valid_access_token(token_service: TokenService, created_user: User) -> str:
+async def valid_access_token(token_service: TokenService, created_user: User) -> str:
     """Create valid access token for testing."""
-    return token_service.create_access_token({"sub": str(created_user.id)})
+    user = await created_user
+    return token_service.create_access_token({"sub": str(user.id)})
 
 
 @pytest.fixture
-def valid_refresh_token(token_service: TokenService, created_user: User) -> str:
+async def valid_refresh_token(token_service: TokenService, created_user: User) -> str:
     """Create valid refresh token for testing."""
-    return token_service.create_refresh_token(str(created_user.id))
+    user = await created_user
+    return token_service.create_refresh_token(str(user.id))
 
 
 @pytest.fixture

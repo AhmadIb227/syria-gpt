@@ -13,7 +13,17 @@
       "Bash(timeout:*)",
       "Bash(del test_auth.py test_oauth_url.py nul run.txt)",
       "Bash(rm:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(del test.db)",
+      "Bash(docker:*)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(run.bat)",
+      "Bash(cmd:*)",
+      "Bash(powershell:*)",
+      "Bash(start /wait cmd /c run.bat)",
+      "Bash(run.bat status)",
+      "Bash(time curl:*)"
     ],
     "deny": [],
     "ask": []

@@ -87,13 +87,22 @@ async def validation_exception_handler(
     """Handle request validation errors."""
     logger.warning(f"Validation error: {exc.errors()}")
 
+    # Clean error details to make them JSON serializable
+    cleaned_errors = []
+    for error in exc.errors():
+        cleaned_error = error.copy()
+        if 'ctx' in cleaned_error and 'error' in cleaned_error['ctx']:
+            # Convert ValueError to string
+            cleaned_error['ctx']['error'] = str(cleaned_error['ctx']['error'])
+        cleaned_errors.append(cleaned_error)
+
     return JSONResponse(
         status_code=422,
         content={
             "error": True,
             "message": "Validation error",
             "status_code": 422,
-            "details": exc.errors(),
+            "details": cleaned_errors,
         },
     )
 

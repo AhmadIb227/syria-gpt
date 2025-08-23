@@ -8,8 +8,8 @@ from sqlalchemy.orm import Session
 from application import AuthApplicationService
 from domain.use_cases import AuthUseCases
 from infrastructure.database import UserRepositoryImpl
-from infrastructure.database.password_reset_repository import PasswordResetRepository
-from infrastructure.database.two_factor_auth_repository_impl import TwoFactorAuthRepositoryImpl
+from infrastructure.database.repositories.password_reset_repository import PasswordResetRepository
+from infrastructure.database.repositories.two_factor_auth_repository_impl import TwoFactorAuthRepositoryImpl
 from infrastructure.services import PasswordService, TokenService, EmailService
 from infrastructure.external_services import GoogleOAuthProvider, FacebookOAuthProvider
 from config.database import get_db

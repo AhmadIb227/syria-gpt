@@ -1,12 +1,12 @@
 """Token service for JWT operations."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Any, Optional
 from jose import JWTError, jwt
 from uuid import UUID
 
 from config.settings import settings
-from infrastructure.database.password_reset_repository import PasswordResetRepository
+from infrastructure.database.repositories.password_reset_repository import PasswordResetRepository
 
 import logging
 
@@ -28,7 +28,7 @@ class TokenService:
     def create_access_token(self, data: Dict[str, Any]) -> str:
         """Create JWT access token."""
         to_encode = data.copy()
-        expire = datetime.utcnow() + timedelta(minutes=self.access_token_expire_minutes)
+        expire = datetime.now(timezone.utc) + timedelta(minutes=self.access_token_expire_minutes)
         to_encode.update({"exp": expire, "type": "access"})
 
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
@@ -37,7 +37,7 @@ class TokenService:
         """Create JWT refresh token."""
         to_encode = {
             "sub": user_id,
-            "exp": datetime.utcnow() + timedelta(days=self.refresh_token_expire_days),
+            "exp": datetime.now(timezone.utc) + timedelta(days=self.refresh_token_expire_days),
             "type": "refresh",
         }
 
@@ -45,7 +45,7 @@ class TokenService:
 
     def create_password_reset_token(self, user_id: UUID, expire_minutes: int = 60) -> str:
         """Create JWT password reset token."""
-        expires_at = datetime.utcnow() + timedelta(minutes=expire_minutes)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
         token = jwt.encode(
             {"sub": str(user_id), "exp": expires_at, "type": "password_reset"},
             self.secret_key,
@@ -61,7 +61,7 @@ class TokenService:
         """Create a short-lived token for 2FA verification."""
         to_encode = {
             "sub": user_id,
-            "exp": datetime.utcnow() + timedelta(minutes=10),  # 2FA token valid for 10 minutes
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=10),  # 2FA token valid for 10 minutes
             "type": "2fa",
         }
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)
@@ -88,7 +88,7 @@ class TokenService:
                 return None
 
             db_token = self.password_reset_repo.get_by_token(token)
-            if not db_token or db_token.is_used or db_token.expires_at < datetime.utcnow():
+            if not db_token or db_token.is_used or db_token.expires_at < datetime.now(timezone.utc):
                 return None
 
             self.password_reset_repo.mark_used(db_token.id)
@@ -102,7 +102,7 @@ class TokenService:
         """Generate a secure JWT for email verification."""
         to_encode = {
             "sub": user_id,
-            "exp": datetime.utcnow() + timedelta(hours=self.email_verification_expire_hours),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=self.email_verification_expire_hours),
             "type": "email_verification",
         }
         return jwt.encode(to_encode, self.secret_key, algorithm=self.algorithm)

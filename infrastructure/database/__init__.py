@@ -1,5 +1,5 @@
 """Database infrastructure package."""
 
-from .user_repository_impl import UserRepositoryImpl
+from .repositories import UserRepositoryImpl, PasswordResetRepository, TwoFactorAuthRepositoryImpl
 
-__all__ = ["UserRepositoryImpl"]
+__all__ = ["UserRepositoryImpl", "PasswordResetRepository", "TwoFactorAuthRepositoryImpl"]

@@ -16,7 +16,7 @@ from config.exceptions import (
     database_exception_handler,
     general_exception_handler,
 )
-from presentation.api import auth_router
+from presentation.api.controllers import auth_router
 
 # Setup logging
 logger = setup_logging()

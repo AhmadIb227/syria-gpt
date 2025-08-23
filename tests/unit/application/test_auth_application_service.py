@@ -9,7 +9,6 @@ from domain.use_cases import AuthUseCases
 from infrastructure.external_services import GoogleOAuthProvider, FacebookOAuthProvider
 
 
-@pytest.mark.asyncio
 class TestAuthApplicationService:
     """Test Auth Application Service."""
     
@@ -35,6 +34,7 @@ class TestAuthApplicationService:
             facebook_provider=mock_facebook_provider
         )
     
+    @pytest.mark.asyncio
     async def test_register_user(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
         """Test user registration."""
         user_data = {
@@ -50,6 +50,7 @@ class TestAuthApplicationService:
         mock_auth_use_cases.register_user.assert_called_once_with(user_data)
         assert result == expected_result
     
+    @pytest.mark.asyncio
     async def test_authenticate_user(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
         """Test user authentication."""
         email = "test@example.com"
@@ -93,6 +94,7 @@ class TestAuthApplicationService:
             "provider": "facebook"
         }
     
+    @pytest.mark.asyncio
     async def test_authenticate_with_google(self, auth_app_service: AuthApplicationService, mock_auth_use_cases, mock_google_provider):
         """Test Google OAuth authentication."""
         auth_code = "google_auth_code_123"
@@ -112,6 +114,7 @@ class TestAuthApplicationService:
         )
         assert result == expected_result
     
+    @pytest.mark.asyncio
     async def test_authenticate_with_facebook(self, auth_app_service: AuthApplicationService, mock_auth_use_cases, mock_facebook_provider):
         """Test Facebook OAuth authentication."""
         auth_code = "facebook_auth_code_123"
@@ -131,6 +134,7 @@ class TestAuthApplicationService:
         )
         assert result == expected_result
     
+    @pytest.mark.asyncio
     async def test_verify_email(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
         """Test email verification."""
         token = "verification_token_123"
@@ -142,6 +146,7 @@ class TestAuthApplicationService:
         mock_auth_use_cases.verify_email.assert_called_once_with(token)
         assert result == expected_result
     
+    @pytest.mark.asyncio
     async def test_change_password(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
         """Test password change."""
         user_id = uuid4()
@@ -163,6 +168,7 @@ class TestAuthApplicationService:
         )
         assert result == expected_result
         
+    @pytest.mark.asyncio
     async def test_request_password_reset(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
         """Test requesting password reset."""
         email = "test@example.com"
@@ -174,6 +180,7 @@ class TestAuthApplicationService:
         mock_auth_use_cases.request_password_reset.assert_called_once_with(email)
         assert result == expected_result
 
+    @pytest.mark.asyncio
     async def test_confirm_password_reset(self, auth_app_service: AuthApplicationService, mock_auth_use_cases):
         """Test confirming password reset."""
         token = "reset_token_123"

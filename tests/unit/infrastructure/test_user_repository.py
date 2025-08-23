@@ -33,11 +33,12 @@ class TestUserRepository:
     
     async def test_get_by_id(self, user_repository: UserRepositoryImpl, created_user: User):
         """Test getting user by ID."""
-        found_user = await user_repository.get_by_id(created_user.id)
+        user = await created_user
+        found_user = await user_repository.get_by_id(user.id)
         
         assert found_user is not None
-        assert found_user.id == created_user.id
-        assert found_user.email == created_user.email
+        assert found_user.id == user.id
+        assert found_user.email == user.email
     
     async def test_get_by_id_not_found(self, user_repository: UserRepositoryImpl):
         """Test getting user by non-existent ID."""
@@ -48,11 +49,12 @@ class TestUserRepository:
     
     async def test_get_by_email(self, user_repository: UserRepositoryImpl, created_user: User):
         """Test getting user by email."""
-        found_user = await user_repository.get_by_email(created_user.email)
+        user = await created_user
+        found_user = await user_repository.get_by_email(user.email)
         
         assert found_user is not None
-        assert found_user.email == created_user.email
-        assert found_user.id == created_user.id
+        assert found_user.email == user.email
+        assert found_user.id == user.id
     
     async def test_get_by_email_not_found(self, user_repository: UserRepositoryImpl):
         """Test getting user by non-existent email."""
@@ -107,13 +109,14 @@ class TestUserRepository:
     
     async def test_update_user(self, user_repository: UserRepositoryImpl, created_user: User):
         """Test updating user data."""
+        user = await created_user
         update_data = {
             "first_name": "Updated",
             "is_email_verified": True,
             "status": UserStatus.ACTIVE.value
         }
         
-        updated_user = await user_repository.update(created_user.id, update_data)
+        updated_user = await user_repository.update(user.id, update_data)
         
         assert updated_user is not None
         assert updated_user.first_name == "Updated"
@@ -155,7 +158,8 @@ class TestUserRepository:
     
     async def test_email_exists(self, user_repository: UserRepositoryImpl, created_user: User):
         """Test checking if email exists."""
-        exists = await user_repository.email_exists(created_user.email)
+        user = await created_user
+        exists = await user_repository.email_exists(user.email)
         assert exists == True
         
         not_exists = await user_repository.email_exists("nonexistent@example.com")

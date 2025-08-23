@@ -11,7 +11,7 @@ class Settings:
     DEBUG: bool = ENVIRONMENT == "development"
 
     # Database Configuration
-    DATABASE_URL: str = config("DATABASE_URL", default="sqlite:///./syria_gpt.db")
+    DATABASE_URL: str = config("DATABASE_URL", default="postgresql://admin:admin123@db:5432/syriagpt")
 
     # Security Configuration
     SECRET_KEY: str = config("SECRET_KEY", default="3e8c7f51e5bd5dac5ba401b1125d43fb")

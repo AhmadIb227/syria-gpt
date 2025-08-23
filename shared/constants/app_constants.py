@@ -1,0 +1,37 @@
+"""Application constants."""
+
+# HTTP Status Codes
+HTTP_200_OK = 200
+HTTP_201_CREATED = 201
+HTTP_400_BAD_REQUEST = 400
+HTTP_401_UNAUTHORIZED = 401
+HTTP_403_FORBIDDEN = 403
+HTTP_404_NOT_FOUND = 404
+HTTP_409_CONFLICT = 409
+HTTP_422_UNPROCESSABLE_ENTITY = 422
+HTTP_500_INTERNAL_SERVER_ERROR = 500
+
+# Authentication
+DEFAULT_ACCESS_TOKEN_EXPIRE_MINUTES = 30
+DEFAULT_REFRESH_TOKEN_EXPIRE_DAYS = 30
+DEFAULT_EMAIL_VERIFICATION_EXPIRE_HOURS = 24
+DEFAULT_PASSWORD_RESET_EXPIRE_HOURS = 1
+
+# User Status
+USER_STATUS_ACTIVE = "active"
+USER_STATUS_INACTIVE = "inactive"
+USER_STATUS_SUSPENDED = "suspended"
+
+# Validation
+MIN_PASSWORD_LENGTH = 8
+MAX_EMAIL_LENGTH = 254
+MAX_NAME_LENGTH = 50
+
+# Messages
+MSG_USER_REGISTERED = "User registered successfully. Please check your email for verification."
+MSG_USER_VERIFIED = "Email verified successfully. You can now sign in."
+MSG_PASSWORD_CHANGED = "Password changed successfully."
+MSG_PASSWORD_RESET_SENT = "Password reset link sent to your email."
+MSG_INVALID_CREDENTIALS = "Invalid email or password"
+MSG_EMAIL_ALREADY_REGISTERED = "Email already registered"
+MSG_PHONE_ALREADY_REGISTERED = "Phone number already registered"
